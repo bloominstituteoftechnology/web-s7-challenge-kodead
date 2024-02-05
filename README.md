@@ -40,7 +40,7 @@ You have been given a take-home coding assessment as part of the hiring process 
 
 #### 👉 TASK 1 - Study the mock site
 
-Your fully-functional **design mock** is <https://bloominstituteoftechnology.github.io/W_S7_Challenge/>
+Your fully-functional **design mock** is <https://bloomistituteoftechnology.github.io/W_S7_Challenge/>
 
 Study it using Chrome Dev Tools, paying special attention to the Elements tab.
 
