@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 function Home() {
   const navigate = useNavigate()
   const handleClick = () => {
-    navigate('/orders')
+    navigate('/order')
   }
   return (
     

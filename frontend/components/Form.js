@@ -9,21 +9,19 @@ const validationErrors = {
   fullNameTooLong: 'full name must be at most 20 characters',
   sizeIncorrect: 'size must be S or M or L'
 }
-console.log(validationErrors.fullNameTooLong)
+
 
 // 👇 Here you will create your schema.
 const formSchema = yup.object().shape({
-  fullname: yup
+  fullName: yup
     .string()
     .min(3, validationErrors.fullNameTooShort)
     .max(20, validationErrors.fullNameTooLong)
     .required(),
   size: yup
     .string()
-    .oneOf(['Small', 'Medium', 'Large'], validationErrors.sizeIncorrect)
-    .max(20, validationErrors.fullNameTooLong)
+    .oneOf(['S', 'M', 'L'], validationErrors.sizeIncorrect)
     .required(),
-    
 
 })
 // 👇 This array could help you construct your checkboxes using .map in the JSX.
@@ -38,86 +36,105 @@ const toppings = [
 const initialFormValue = {
   fullName: '',
   size: '',
-  toppings: [{ topping_id: '1', text: 'Pepperoni' },
-  { topping_id: '2', text: 'Green Peppers' },
-  { topping_id: '3', text: 'Pineapple' },
-  { topping_id: '4', text: 'Mushrooms' },
-  { topping_id: '5', text: 'Ham' }],
+  toppings: []
 
 }
+
+const initialErrors = {
+  fullName: '',
+  size: '',
+  }
 export default function Form() {
   const [enabled, setEnabled] = useState(false) 
   const [formData, setFormData] = useState(
     initialFormValue);
   const [message, setMessage] = useState('')
-  const [formErrors, setFormErrors] = useState('')
+  const [formErrors, setFormErrors] = useState(initialErrors)
+
   useEffect(() => {
     formSchema.isValid(formData).then(isValid => {
-      setEnabled(isValid)
-    })
+      setEnabled(isValid);
+    }, [formData]);
   })
-  const submit = () => {
-    const newOrder ={
-      fullName: formData.fullName.trim(),
-      size: formData.size,
-      toppings: formData.toppings,
-    }
-    const {fullName, size, toppings} = formData
-    axios.post('http://localhost:9009/api/order', {fullName, size, toppings})
-      .then(res => {
-        setMessage(res.data.message)
-        setFormErrors(res.response.data.message)
-      })
-      .catch(err => console.error(err))
+  // const submit = () => {
+  //   const newOrder ={
+  //     fullName: formData.fullName.trim(),
+  //     size: formData.size,
+  //     toppings: formData.toppings,
+  //   }
+  //   const {fullName, size, toppings} = formData
+  //   axios.post('http://localhost:9009/api/order', {fullName, size, toppings})
+  //     .then(res => {
+  //       setMessage(res.data.message)
+  //       setFormErrors(res.data.message)
+  //       console.log(res)
+  //     })
+  //     .catch(err => console.error(err))
       
-  }
-  const validate = (name, value) => {
-    yup.reach(formSchema, name)
-    .validate(value)
-    .then(() => setFormErrors({ ...formErrors, [name] : ''}))
-    .catch(err => setFormErrors({ ...formErrors, [name]: err.errors[0]}))
-  }
-  const inputChange = (name, value) => {
-    // 🔥 STEP 10- RUN VALIDATION WITH YUP
-    validate(name, value);
-    setFormData({
-      ...formData,
-      [name]: value // NOT AN ARRAY
-    })
-  }
+  // }
+  
+  // const inputChange = (id, value) => {
+  //   // 🔥 STEP 10- RUN VALIDATION WITH YUP
+  //   validate(id, value);
+  //   setFormData({
+  //     ...formData,
+  //     [id]: value // NOT AN ARRAY
+  //   })
+  // }
     const change = (event) => {
-      let { id, name, value, type, checked } = event.target;
-      if( type === "checkbox" ) {!true}
+      let { id, value, type, checked } = event.target;
+      if( type === "checkbox" ) {
+        if (checked) {
+          setFormData({
+            ...formData, toppings: [...formData.toppings, id],
+          });          
+        } else {
+          setFormData({
+            ...formData, toppings: formData.toppings.filter((topping) => topping !== id),
+          });
+          
+        }
+      } else {
+        setFormData({ ...formData, [id]: value});
+        yup.reach(formSchema, id)
+        .validate(value.trim())
+        .then(() => setFormErrors({ ...formErrors, [id] : ''}))
+        .catch((err) => {setFormErrors({ ...formErrors, [id]: err.errors[0]});
+      })
+      }
       // inputChange(name, valueToUse)
       
-      setFormData({...formData, [id]: value, [name]: value  })
+      // setFormData({...formData, [id]: value, [name]: value  })
     }
-      console.log(toppings[0])
+    
     
   
   // const change = (evt) => {
     //   const { name, value, type, checked } = evt.target
     //   setFormData({ ...formData, [name]: value, [type]: checked })
-    const handleSubmit = (evt) => {
+    const handleSubmit = async (evt) => {
       evt.preventDefault();
+      const response = await 
+      axios.post('http://localhost:9009/api/order', formData);
+      setMessage(response.data.message);
+      setFormData(initialFormValue);
     // setFormData( {fullname: '', size: '', toppings: []})
     //   console.log('sending')
       // handleSubmit()
-      submit()
     }
     // }
     return (
       <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
       {message && <div className='success'>{message}</div>}
-      {formErrors && <div className='failure'>{formErrors}</div>}
+      {/* {false && <div className='failure'></div>} */}
 
       <div className="input-group">
         <div>
           <label htmlFor="fullName">Full Name</label><br />
           <input placeholder="Type full name" id="fullName" type="text" value={formData.fullName }onChange={change} />
         </div>
-        {validationErrors.fullNameTooShort && <div className='error'>{validationErrors.fullNameTooShort}</div> }
+        {formErrors.fullName && (<div className='error'>{formErrors.fullName}</div>) }
       </div>
 
       <div className="input-group">
@@ -132,14 +149,14 @@ export default function Form() {
             
           </select>
         </div>
-        {true && <div className='error'>size must be S or M or L</div>}
+        {formErrors.size && <div className='error'>{formErrors.size}</div>}
       </div>
 
       <div className="input-group">
         {toppings.map((topping, idx) => {
           return (
             <label key={idx}>
-              <input  name='toppings'  type='checkbox' checked={false}  onChange={change}/>
+              <input  id={topping.topping_id}  type='checkbox' checked={formData.toppings.includes(topping.topping_id)} onChange={change}/>
               {topping.text} </label>
           )
         }
